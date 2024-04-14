@@ -1,0 +1,44 @@
+---
+// Import the BaseLayout component from the relative path
+import BaseLayout from '../../layouts/BaseLayout.astro'; 
+
+// Import the BlogPost component from the relative path
+import BlogPost from '../../components/BlogPost.astro';
+
+// Define the possible values for the dynamic 'tag' parameter
+export async function getStaticPaths() {
+  // Use Astro's glob function to get all markdown files in the '../posts/' directory
+  const allPosts = await Astro.glob('../posts/*.md');
+
+  // Create a set of unique tags by flattening the array of tags from each post and removing duplicates
+  const uniqueTags = [...new Set(allPosts.flatMap(post => post.frontmatter.tags).flat())];
+
+  // For each unique tag, filter the posts that include that tag and return an object that includes the tag as a parameter and the filtered posts as a prop
+  return uniqueTags.map((tag)=>{
+    const filteredPosts = allPosts.filter(post => post.frontmatter.tags.includes(tag));
+
+    return {
+      params:{tag},
+      props: {posts: filteredPosts}
+    }
+  });
+}
+
+// Extract the 'tag' parameter from the current URL
+const { tag } = Astro.params;
+
+// Extract the 'posts' prop from Astro.props, which is an array of posts that include the current tag
+const { posts } = Astro.props;
+---
+<!--The HTML part of the Astro.js file-->
+<!--Use the BaseLayout component and pass the 'tag' value to it as a prop named 'pageTitle'-->
+<BaseLayout pageTitle={tag}>
+  <!--Display a paragraph with the text "Posts tagged with {tag}", where {tag} will be replaced with the actual value of 'tag'-->
+  <p>Posts tagged with {tag}</p>
+
+  <!--Create a list of BlogPost components, one for each post in the 'posts' array, and pass the URL and title of each post to the BlogPost component as props-->
+  <ul>
+    {posts.map((post) => <BlogPost url={post.url} title={post.frontmatter.title}/>)}
+  </ul>
+</BaseLayout>
+
